@@ -61,10 +61,15 @@ export default styled.div`
     border-radius: 3px;
 
     & > div {
-      display: flex;
-      flex-flow: row nowrap;
       line-height: 2em;
       margin: 5px;
+      display: flex;
+      justify-content: start;
+      align-items: center;
+      &.horizontal_center_div {
+        display: flex;
+        justify-content: center;
+      }
       & > label {
         color: #333;
         width: 110px;
@@ -77,7 +82,7 @@ export default styled.div`
         flex: 1;
         padding: 3px 5px;
         font-size: 1em;
-        margin-left: 15px;
+        max-width: 300px;
         border: 1px solid #ccc;
         border-radius: 3px;
       }
@@ -86,8 +91,11 @@ export default styled.div`
       }
       & > div {
         margin-left: 16px;
+        text-align: center;
+        margin-bottom: 12px;
         & > label {
           display: block;
+          padding-left: 0;
           & > input {
             margin-right: 3px;
           }
@@ -102,15 +110,6 @@ export default styled.div`
     }
     button {
       margin: 0 10px;
-      &[type='submit'] {
-        ${btnPrimary};
-      }
-      &[type='button'] {
-        ${btnDefault};
-      }
-      &:hover {
-        coursor: pointer;
-      }
     }
     pre {
       border: 1px solid #ccc;

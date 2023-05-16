@@ -5,9 +5,10 @@ import Styles from './Styles';
 import { Form, Field } from 'react-final-form';
 import TimeInput from './TimeInput';
 import { OnChange } from 'react-final-form-listeners';
-const axios = require('axios');
-
-const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+import Button from '@mui/material/Button';
+import DeleteIcon from '@mui/icons-material/Delete';
+import SendIcon from '@mui/icons-material/Send';
+import { TextField } from '@mui/material';
 
 const onSubmit = async (values) => {
   console.log(values);
@@ -86,27 +87,31 @@ const App = () => (
       onSubmit={onSubmit}
       render={({ handleSubmit, form, submitting, pristine, values }) => (
         <form onSubmit={handleSubmit}>
-          <Field name='name' validate={required}>
-            {({ input, meta }) => (
-              <div>
-                <label>Dish name</label>
-                <input {...input} type='text' placeholder='Dish name' />
-                {meta.error && meta.touched && <span>{meta.error}</span>}
-              </div>
-            )}
-          </Field>
-          <Field name='preparation_time' validate={required}>
-            {({ input, meta }) => (
-              <div>
-                <label>Preparation time</label>
-                <TimeInput {...input} {...meta} />
-                {meta.error && meta.touched && <span>{meta.error}</span>}
-              </div>
-            )}
-          </Field>
-
           <div>
-            <label>Type of dish</label>
+            <Field name='name' validate={required}>
+              {({ input, meta }) => (
+                <div>
+                  <TextField label='Dish name' variant='outlined'>
+                    <label>Dish name</label>
+                    <input {...input} type='text' />
+                    {meta.error && meta.touched && <span>{meta.error}</span>}
+                  </TextField>
+                </div>
+              )}
+            </Field>
+
+            <Field name='preparation_time' validate={required}>
+              {({ input, meta }) => (
+                <div>
+                  <TimeInput {...input} />
+                  {meta.error && meta.touched && <span>{meta.error}</span>}
+                </div>
+              )}
+            </Field>
+          </div>
+
+          <div className='horizontal_center_div'>
+            <label>Type of dish:</label>
             <Field
               name='type'
               component='select'
@@ -154,9 +159,9 @@ const App = () => (
             >
               {({ input, meta }) => {
                 return (
-                  <div>
-                    <label>Number of slices</label>
-                    <input {...input} type='number' />
+                  <div className='horizontal_center_div'>
+                    <label>Number of slices:</label>
+                    <input {...input} type='number' min={0} />
                     {meta.error && meta.touched && <span>{meta.error}</span>}
                   </div>
                 );
@@ -169,9 +174,9 @@ const App = () => (
             >
               {({ input, meta }) => {
                 return (
-                  <div>
-                    <label>Diameter</label>
-                    <input {...input} type='number' step='0.5' />
+                  <div className='horizontal_center_div'>
+                    <label>Diameter:</label>
+                    <input {...input} type='float' step='0.5' />
                     {/* kąt, float */}
                     {meta.error && meta.touched && <span>{meta.error}</span>}
                   </div>
@@ -194,8 +199,8 @@ const App = () => (
             to={''}
           />
           <Condition when='type' is='soup'>
-            <div>
-              <label>Spiciness scale</label>
+            <div className='horizontal_center_div'>
+              <label>Spiciness scale:</label>
               <Field
                 name='spiciness_scale'
                 component='select'
@@ -235,8 +240,8 @@ const App = () => (
               validate={composeValidators(required, mustBeNumber)}
             >
               {({ input, meta }) => (
-                <div>
-                  <label>Slices of bread</label>
+                <div className='horizontal_center_div'>
+                  <label>Slices of bread:</label>
                   <input {...input} type='number' />
                   {meta.error && meta.touched && <span>{meta.error}</span>}
                 </div>
@@ -245,16 +250,23 @@ const App = () => (
           </Condition>
 
           <div className='buttons'>
-            <button type='submit' disabled={submitting}>
+            <Button
+              type='submit'
+              disabled={submitting}
+              variant='contained'
+              endIcon={<SendIcon />}
+            >
               Submit
-            </button>
-            <button
+            </Button>
+            <Button
               type='button'
               onClick={form.reset}
               disabled={submitting || pristine}
+              variant='outlined'
+              startIcon={<DeleteIcon />}
             >
               Reset
-            </button>
+            </Button>
           </div>
           <pre>{JSON.stringify(values, 0, 2)}</pre>
         </form>

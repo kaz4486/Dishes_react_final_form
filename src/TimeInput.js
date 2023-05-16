@@ -1,7 +1,10 @@
 import React, { useState } from 'react';
 import TimeField from 'react-simple-timefield';
+import Grid from '@mui/material/Unstable_Grid2';
+import Box from '@mui/material/Box';
+import Item from './Components/Item/Item';
 
-const TimeInput = (input, meta) => {
+const TimeInput = (input) => {
   const [currentTime, setCurrentTime] = useState('');
 
   const handleTimeChange = (event) => {
@@ -11,23 +14,26 @@ const TimeInput = (input, meta) => {
   };
 
   return (
-    <div>
-      <label htmlFor={input.name}>Time</label>
-      <TimeField
-        name={input.name}
-        value={currentTime}
-        onChange={handleTimeChange}
-        showSeconds
-        style={{
-          border: '1px solid #ccc',
-          borderRadius: '4px',
-          padding: '5px',
-        }}
-      />
-      {meta.touched && meta.error && (
-        <span style={{ color: 'red' }}>{meta.error}</span>
-      )}
-    </div>
+    <Grid container spacing={2}>
+      <Grid xs={12}>
+        <Item>
+          <label htmlFor={input.name}>Preparation time:</label>
+
+          <TimeField
+            name={input.name}
+            value={currentTime}
+            onChange={handleTimeChange}
+            showSeconds
+            style={{
+              border: '1px solid #ccc',
+              borderRadius: '4px',
+              padding: '5px',
+              marginInline: '5px',
+            }}
+          />
+        </Item>
+      </Grid>
+    </Grid>
   );
 };
 
