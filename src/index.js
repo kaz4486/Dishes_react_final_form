@@ -5,16 +5,45 @@ import Styles from './Styles';
 import { Form, Field } from 'react-final-form';
 import TimeInput from './TimeInput';
 import { OnChange } from 'react-final-form-listeners';
+const axios = require('axios');
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 const onSubmit = async (values) => {
-  await sleep(300);
-  window.alert(JSON.stringify(values, 0, 2));
+  console.log(values);
+  const jsonData = JSON.stringify(values);
+  console.log(jsonData);
+
+  try {
+    // Wykonanie żądania asynchronicznego do serwera
+    const response = await fetch(
+      'https://umzzcc503l.execute-api.us-west-2.amazonaws.com/dishes/',
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: jsonData,
+      }
+    );
+
+    if (response.ok) {
+      // Odczytanie odpowiedzi jako JSON
+      const responseData = await response.json();
+      console.log(responseData);
+    } else {
+      console.log('Błąd żądania:', response.status);
+    }
+  } catch (error) {
+    console.log('Wystąpił błąd:', error);
+  }
 };
 
+// await sleep(300);
+// window.alert(JSON.stringify(values, 0, 2));
+
 const required = (value) => (value ? undefined : 'Required');
-const validateRequired = (value) => (!value ? 'Required' : undefined);
+// const validateRequired = (value) => (!value ? 'Required' : undefined);
 
 const mustBeNumber = (value) => (isNaN(value) ? 'Must be a number' : undefined);
 // const minValue = min => value =>
@@ -52,6 +81,7 @@ const WhenFieldChanges = ({ field, becomes, set, to }) => (
 
 const App = () => (
   <Styles>
+    <h1>Insert your dish!</h1>
     <Form
       onSubmit={onSubmit}
       render={({ handleSubmit, form, submitting, pristine, values }) => (
@@ -169,8 +199,7 @@ const App = () => (
               <Field
                 name='spiciness_scale'
                 component='select'
-                validate={validateRequired}
-                // validate={composeValidators(required, mustBeNumber, minValue(18))}
+                validate={composeValidators(required, mustBeNumber)}
               >
                 <option value=''>Select a spiciness level</option>
                 <option value='1'>1</option>
