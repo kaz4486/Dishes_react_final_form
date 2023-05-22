@@ -9,10 +9,19 @@ import Button from '@mui/material/Button';
 import DeleteIcon from '@mui/icons-material/Delete';
 import SendIcon from '@mui/icons-material/Send';
 import { TextField } from '@mui/material';
+import * as yup from 'yup';
+import { v4 as uuid } from 'uuid';
 
 const onSubmit = async (values) => {
   console.log(values);
-  const jsonData = JSON.stringify(values);
+  const id = uuid();
+  const small_id = id.slice(0, 8);
+  console.log(id);
+  const dish = {
+    small_id,
+    ...values,
+  };
+  const jsonData = JSON.stringify(dish);
   console.log(jsonData);
 
   try {
@@ -33,18 +42,18 @@ const onSubmit = async (values) => {
       const responseData = await response.json();
       console.log(responseData);
     } else {
-      console.log('Błąd żądania:', response.status);
+      console.log('Bad request', response.status);
     }
   } catch (error) {
-    console.log('Wystąpił błąd:', error);
+    console.log('Error:', error);
   }
 };
 
 // await sleep(300);
 // window.alert(JSON.stringify(values, 0, 2));
 
-const required = (value) => (value ? undefined : 'Required');
-// const validateRequired = (value) => (!value ? 'Required' : undefined);
+const required = (value) => (value ? undefined : 'This field is required');
+const validateRequired = (value) => (!value ? 'Required' : undefined);
 
 const mustBeNumber = (value) => (isNaN(value) ? 'Must be a number' : undefined);
 // const minValue = min => value =>
@@ -56,6 +65,32 @@ const composeValidators =
       (error, validator) => error || validator(value),
       undefined
     );
+
+const validationSchema = yup.object().shape({
+  name: yup.string().required('This field is required'),
+  preparation_time: yup.string().required('This field is required'),
+  type: yup.string().required('This field is required'),
+  no_of_slices: yup.number().when('type', {
+    is: 'pizza',
+    then: yup.number().required('This field is required'),
+    otherwise: yup.number(),
+  }),
+  diameter: yup.number().when('type', {
+    is: 'pizza',
+    then: yup.number().required('This field is required'),
+    otherwise: yup.number(),
+  }),
+  spiciness_scale: yup.number().when('type', {
+    is: 'soup',
+    then: yup.number().required('This field is required'),
+    otherwise: yup.number(),
+  }),
+  slices_of_bread: yup.number().when('type', {
+    is: 'sandwich',
+    then: yup.number().required('This field is required'),
+    otherwise: yup.number(),
+  }),
+});
 
 const Condition = ({ when, is, children }) => (
   <Field name={when} subscription={{ value: true }}>
@@ -80,200 +115,193 @@ const WhenFieldChanges = ({ field, becomes, set, to }) => (
   </Field>
 );
 
-const App = () => (
-  <Styles>
-    <h1>Insert your dish!</h1>
-    <Form
-      onSubmit={onSubmit}
-      render={({ handleSubmit, form, submitting, pristine, values }) => (
-        <form onSubmit={handleSubmit}>
-          <div>
-            <Field name='name' validate={required}>
-              {({ input, meta }) => (
-                <div>
-                  <TextField label='Dish name' variant='outlined'>
+const App = () => {
+  return (
+    <Styles>
+      <h1>Insert your dish!</h1>
+      <Form
+        onSubmit={onSubmit}
+        validationSchema={validationSchema}
+        render={({
+          handleSubmit,
+          form,
+          submitting,
+          pristine,
+          values,
+          touched,
+        }) => (
+          <form onSubmit={handleSubmit}>
+            <div>
+              <Field name='name'>
+                {({ input, meta }) => (
+                  <div>
                     <label>Dish name</label>
                     <input {...input} type='text' />
                     {meta.error && meta.touched && <span>{meta.error}</span>}
-                  </TextField>
-                </div>
-              )}
-            </Field>
+                  </div>
+                )}
+              </Field>
 
-            <Field name='preparation_time' validate={required}>
-              {({ input, meta }) => (
-                <div>
-                  <TimeInput {...input} />
-                  {meta.error && meta.touched && <span>{meta.error}</span>}
-                </div>
-              )}
-            </Field>
-          </div>
-
-          <div className='horizontal_center_div'>
-            <label>Type of dish:</label>
-            <Field
-              name='type'
-              component='select'
-              validate={required}
-
-              // validate={composeValidators(required, mustBeNumber, minValue(18))}
-            >
-              <option>Select type of the dish</option>
-              <option value='pizza'>pizza</option>
-              <option value='soup'>soup</option>
-              <option value='sandwich'>sandwich</option>
-              {/* {meta.error && meta.touched && <span>{meta.error}</span>} */}
-            </Field>
-          </div>
-
-          {/* if pizza */}
-          <WhenFieldChanges
-            field='type'
-            becomes={'soup'}
-            set='no_of_slices'
-            to={''}
-          />
-          <WhenFieldChanges
-            field='type'
-            becomes={'soup'}
-            set='diameter'
-            to={''}
-          />
-          <WhenFieldChanges
-            field='type'
-            becomes={'sandwich'}
-            set='no_of_slices'
-            to={''}
-          />
-          <WhenFieldChanges
-            field='type'
-            becomes={'sandwich'}
-            set='diameter'
-            to={''}
-          />
-          <Condition when='type' is='pizza'>
-            <Field
-              name='no_of_slices'
-              validate={composeValidators(required, mustBeNumber)}
-            >
-              {({ input, meta }) => {
-                return (
-                  <div className='horizontal_center_div'>
-                    <label>Number of slices:</label>
-                    <input {...input} type='number' min={0} />
+              <Field name='preparation_time'>
+                {({ input, meta }) => (
+                  <div>
+                    <TimeInput {...input} />
                     {meta.error && meta.touched && <span>{meta.error}</span>}
                   </div>
-                );
-              }}
-            </Field>
-
-            <Field
-              name='diameter'
-              validate={composeValidators(required, mustBeNumber)}
-            >
-              {({ input, meta }) => {
-                return (
-                  <div className='horizontal_center_div'>
-                    <label>Diameter:</label>
-                    <input {...input} type='float' step='0.5' />
-                    {/* kąt, float */}
-                    {meta.error && meta.touched && <span>{meta.error}</span>}
-                  </div>
-                );
-              }}
-            </Field>
-          </Condition>
-
-          {/* if soup */}
-          <WhenFieldChanges
-            field='type'
-            becomes={'pizza'}
-            set='spiciness_scale'
-            to={''}
-          />
-          <WhenFieldChanges
-            field='type'
-            becomes={'sandwich'}
-            set='spiciness_scale'
-            to={''}
-          />
-          <Condition when='type' is='soup'>
-            <div className='horizontal_center_div'>
-              <label>Spiciness scale:</label>
-              <Field
-                name='spiciness_scale'
-                component='select'
-                validate={composeValidators(required, mustBeNumber)}
-              >
-                <option value=''>Select a spiciness level</option>
-                <option value='1'>1</option>
-                <option value='2'>2</option>
-                <option value='3'>3</option>
-                <option value='4'>4</option>
-                <option value='5'>5</option>
-                <option value='6'>6</option>
-                <option value='7'>7</option>
-                <option value='8'>8</option>
-                <option value='9'>9</option>
-                <option value='10'>10</option>
+                )}
               </Field>
             </div>
-          </Condition>
 
-          {/* if sandwich */}
-          <WhenFieldChanges
-            field='type'
-            becomes={'pizza'}
-            set='slices_of_bread'
-            to={''}
-          />
-          <WhenFieldChanges
-            field='type'
-            becomes={'soup'}
-            set='slices_of_bread'
-            to={''}
-          />
-          <Condition when='type' is='sandwich'>
-            <Field
-              name='slices_of_bread'
-              validate={composeValidators(required, mustBeNumber)}
-            >
-              {({ input, meta }) => (
-                <div className='horizontal_center_div'>
-                  <label>Slices of bread:</label>
-                  <input {...input} type='number' />
-                  {meta.error && meta.touched && <span>{meta.error}</span>}
-                </div>
-              )}
-            </Field>
-          </Condition>
+            <div className='horizontal_center_div'>
+              <label>Type of dish:</label>
+              <Field
+                name='type'
+                component='select'
+                // validate={required}
+              >
+                <option>Select type of the dish</option>
+                <option value='pizza'>pizza</option>
+                <option value='soup'>soup</option>
+                <option value='sandwich'>sandwich</option>
+                {/* {meta.error && meta.touched && <span>{meta.error}</span>} */}
+              </Field>
+            </div>
 
-          <div className='buttons'>
-            <Button
-              type='submit'
-              disabled={submitting}
-              variant='contained'
-              endIcon={<SendIcon />}
-            >
-              Submit
-            </Button>
-            <Button
-              type='button'
-              onClick={form.reset}
-              disabled={submitting || pristine}
-              variant='outlined'
-              startIcon={<DeleteIcon />}
-            >
-              Reset
-            </Button>
-          </div>
-          <pre>{JSON.stringify(values, 0, 2)}</pre>
-        </form>
-      )}
-    />
-  </Styles>
-);
+            {/* if pizza */}
+            <WhenFieldChanges
+              field='type'
+              becomes={'soup'}
+              set='no_of_slices'
+              to={''}
+            />
+            <WhenFieldChanges
+              field='type'
+              becomes={'soup'}
+              set='diameter'
+              to={''}
+            />
+            <WhenFieldChanges
+              field='type'
+              becomes={'sandwich'}
+              set='no_of_slices'
+              to={''}
+            />
+            <WhenFieldChanges
+              field='type'
+              becomes={'sandwich'}
+              set='diameter'
+              to={''}
+            />
+            <Condition when='type' is='pizza'>
+              <Field name='no_of_slices'>
+                {({ input, meta }) => {
+                  return (
+                    <div className='horizontal_center_div'>
+                      <label>Number of slices:</label>
+                      <input {...input} type='number' min={0} />
+                      {meta.error && meta.touched && <span>{meta.error}</span>}
+                    </div>
+                  );
+                }}
+              </Field>
+
+              <Field name='diameter'>
+                {({ input, meta }) => {
+                  return (
+                    <div className='horizontal_center_div'>
+                      <label>Diameter:</label>
+                      <input {...input} type='number' step='any' />
+
+                      {meta.error && meta.touched && <span>{meta.error}</span>}
+                    </div>
+                  );
+                }}
+              </Field>
+            </Condition>
+
+            {/* if soup */}
+            <WhenFieldChanges
+              field='type'
+              becomes={'pizza'}
+              set='spiciness_scale'
+              to={''}
+            />
+            <WhenFieldChanges
+              field='type'
+              becomes={'sandwich'}
+              set='spiciness_scale'
+              to={''}
+            />
+            <Condition when='type' is='soup'>
+              <div className='horizontal_center_div'>
+                <label>Spiciness scale:</label>
+                <Field name='spiciness_scale' component='select'>
+                  <option value=''>Select a spiciness level</option>
+                  <option value='1'>1</option>
+                  <option value='2'>2</option>
+                  <option value='3'>3</option>
+                  <option value='4'>4</option>
+                  <option value='5'>5</option>
+                  <option value='6'>6</option>
+                  <option value='7'>7</option>
+                  <option value='8'>8</option>
+                  <option value='9'>9</option>
+                  <option value='10'>10</option>
+                </Field>
+              </div>
+            </Condition>
+
+            {/* if sandwich */}
+            <WhenFieldChanges
+              field='type'
+              becomes={'pizza'}
+              set='slices_of_bread'
+              to={''}
+            />
+            <WhenFieldChanges
+              field='type'
+              becomes={'soup'}
+              set='slices_of_bread'
+              to={''}
+            />
+            <Condition when='type' is='sandwich'>
+              <Field name='slices_of_bread'>
+                {({ input, meta }) => (
+                  <div className='horizontal_center_div'>
+                    <label>Slices of bread:</label>
+                    <input {...input} type='number' />
+                    {meta.error && meta.touched && <span>{meta.error}</span>}
+                  </div>
+                )}
+              </Field>
+            </Condition>
+
+            <div className='buttons'>
+              <Button
+                type='submit'
+                disabled={submitting}
+                variant='contained'
+                endIcon={<SendIcon />}
+              >
+                Submit
+              </Button>
+              <Button
+                type='button'
+                onClick={form.reset}
+                disabled={submitting || pristine}
+                variant='outlined'
+                startIcon={<DeleteIcon />}
+              >
+                Reset
+              </Button>
+            </div>
+            <pre>{JSON.stringify(values, 0, 2)}</pre>
+          </form>
+        )}
+      />
+    </Styles>
+  );
+};
 
 // render(<App />, document.getElementById('root'));
 // const root = ReactDOM.createRoot(document.getElementById('root'));
