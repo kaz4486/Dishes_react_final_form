@@ -52,44 +52,60 @@ const onSubmit = async (values) => {
 // await sleep(300);
 // window.alert(JSON.stringify(values, 0, 2));
 
-const required = (value) => (value ? undefined : 'This field is required');
-const validateRequired = (value) => (!value ? 'Required' : undefined);
+// const required = (value) => (value ? undefined : 'This field is required');
+// const validateRequired = (value) => (!value ? 'Required' : undefined);
 
-const mustBeNumber = (value) => (isNaN(value) ? 'Must be a number' : undefined);
-// const minValue = min => value =>
-//   isNaN(value) || value >= min ? undefined : `Should be greater than ${min}`
-const composeValidators =
-  (...validators) =>
-  (value) =>
-    validators.reduce(
-      (error, validator) => error || validator(value),
-      undefined
-    );
+// const mustBeNumber = (value) => (isNaN(value) ? 'Must be a number' : undefined);
+// // const minValue = min => value =>
+// //   isNaN(value) || value >= min ? undefined : `Should be greater than ${min}`
+// const composeValidators =
+//   (...validators) =>
+//   (value) =>
+//     validators.reduce(
+//       (error, validator) => error || validator(value),
+//       undefined
+//     );
 
 const validationSchema = yup.object().shape({
   name: yup.string().required('This field is required'),
   preparation_time: yup.string().required('This field is required'),
   type: yup.string().required('This field is required'),
-  no_of_slices: yup.number().when('type', {
-    is: 'pizza',
-    then: yup.number().required('This field is required'),
-    otherwise: yup.number(),
-  }),
-  diameter: yup.number().when('type', {
-    is: 'pizza',
-    then: yup.number().required('This field is required'),
-    otherwise: yup.number(),
-  }),
-  spiciness_scale: yup.number().when('type', {
-    is: 'soup',
-    then: yup.number().required('This field is required'),
-    otherwise: yup.number(),
-  }),
-  slices_of_bread: yup.number().when('type', {
-    is: 'sandwich',
-    then: yup.number().required('This field is required'),
-    otherwise: yup.number(),
-  }),
+  no_of_slices: yup
+    .number()
+    .min(1, "This field can't be smaller than 1")
+    .max(99, "This field can't be bigger than 1")
+    .when('type', {
+      is: 'pizza',
+      then: yup.number().required('This field is required'),
+      otherwise: yup.number(),
+    }),
+  diameter: yup
+    .number()
+    .min(1, "This field can't be smaller than 1")
+    .max(99, "This field can't be bigger than 1")
+    .when('type', {
+      is: 'pizza',
+      then: yup.number().required('This field is required'),
+      otherwise: yup.number(),
+    }),
+  spiciness_scale: yup
+    .number()
+    .min(1, "This field can't be smaller than 1")
+    .max(99, "This field can't be bigger than 1")
+    .when('type', {
+      is: 'soup',
+      then: yup.number().required('This field is required'),
+      otherwise: yup.number(),
+    }),
+  slices_of_bread: yup
+    .number()
+    .min(1, "This field can't be smaller than 1")
+    .max(99, "This field can't be bigger than 1")
+    .when('type', {
+      is: 'sandwich',
+      then: yup.number().required('This field is required'),
+      otherwise: yup.number(),
+    }),
 });
 
 const Condition = ({ when, is, children }) => (
@@ -210,7 +226,7 @@ const App = () => {
                   return (
                     <div className='horizontal_center_div'>
                       <label>Diameter:</label>
-                      <input {...input} type='number' step='any' />
+                      <input {...input} type='number' step='0.1' />
 
                       {meta.error && meta.touched && <span>{meta.error}</span>}
                     </div>
