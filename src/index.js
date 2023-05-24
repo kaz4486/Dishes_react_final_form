@@ -1,3 +1,4 @@
+import * as yup from 'yup';
 import React from 'react';
 import ReactDOM from 'react-dom';
 
@@ -9,67 +10,22 @@ import Button from '@mui/material/Button';
 import DeleteIcon from '@mui/icons-material/Delete';
 import SendIcon from '@mui/icons-material/Send';
 import { TextField } from '@mui/material';
-import * as yup from 'yup';
 import { v4 as uuid } from 'uuid';
-
-const onSubmit = async (values) => {
-  console.log(values);
-  const id = uuid();
-  const small_id = id.slice(0, 8);
-  console.log(id);
-  const dish = {
-    small_id,
-    ...values,
-  };
-  const jsonData = JSON.stringify(dish);
-  console.log(jsonData);
-
-  try {
-    // Wykonanie żądania asynchronicznego do serwera
-    const response = await fetch(
-      'https://umzzcc503l.execute-api.us-west-2.amazonaws.com/dishes/',
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: jsonData,
-      }
-    );
-
-    if (response.ok) {
-      // Odczytanie odpowiedzi jako JSON
-      const responseData = await response.json();
-      console.log(responseData);
-    } else {
-      console.log('Bad request', response.status);
-    }
-  } catch (error) {
-    console.log('Error:', error);
-  }
-};
-
-// await sleep(300);
-// window.alert(JSON.stringify(values, 0, 2));
-
-// const required = (value) => (value ? undefined : 'This field is required');
-// const validateRequired = (value) => (!value ? 'Required' : undefined);
-
-// const mustBeNumber = (value) => (isNaN(value) ? 'Must be a number' : undefined);
-// // const minValue = min => value =>
-// //   isNaN(value) || value >= min ? undefined : `Should be greater than ${min}`
-// const composeValidators =
-//   (...validators) =>
-//   (value) =>
-//     validators.reduce(
-//       (error, validator) => error || validator(value),
-//       undefined
-//     );
 
 const validationSchema = yup.object().shape({
   name: yup.string().required('This field is required'),
-  preparation_time: yup.string().required('This field is required'),
-  type: yup.string().required('This field is required'),
+  preparation_time: yup
+    .string()
+    .required('This field is required')
+    .test('not-equal', 'Preparation time is required', (value) => {
+      return value !== '00:00:00';
+    }),
+  type: yup
+    .string()
+    .required('This field is required')
+    .test('equal', 'Type must be equal pizza or soup or sandwich ', (value) => {
+      return value !== 'pizza' || value !== 'soup' || value !== 'sandwich';
+    }),
   no_of_slices: yup
     .number()
     .min(1, "This field can't be smaller than 1")
@@ -82,7 +38,7 @@ const validationSchema = yup.object().shape({
   diameter: yup
     .number()
     .min(1, "This field can't be smaller than 1")
-    .max(99, "This field can't be bigger than 1")
+    .max(99, "This field can't be bigger than 99")
     .when('type', {
       is: 'pizza',
       then: yup.number().required('This field is required'),
@@ -131,13 +87,62 @@ const WhenFieldChanges = ({ field, becomes, set, to }) => (
   </Field>
 );
 
+const onSubmit = async (values) => {
+  console.log('ha');
+  console.log(values);
+  const id = uuid();
+  const small_id = id.slice(0, 8);
+  console.log(id);
+  const dish = {
+    small_id,
+    ...values,
+  };
+  const jsonData = JSON.stringify(dish);
+  console.log(jsonData);
+
+  try {
+    // Wykonanie żądania asynchronicznego do serwera
+    const response = await fetch(
+      'https://umzzcc503l.execute-api.us-west-2.amazonaws.com/dishes/',
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: jsonData,
+      }
+    );
+
+    if (response.ok) {
+      // Odczytanie odpowiedzi jako JSON
+      const responseData = await response.json();
+      console.log(responseData);
+    } else {
+      console.log('Bad request', response.status);
+    }
+  } catch (error) {
+    console.log('Error:', error);
+  }
+};
+
+const validateField = (value) => {
+  // eslint-disable-next-line no-restricted-globals
+  const schema = validationSchema.fields['name'];
+
+  try {
+    schema.validateSync(value);
+  } catch (e) {
+    return e.errors && e.errors[0];
+  }
+};
+
 const App = () => {
   return (
     <Styles>
       <h1>Insert your dish!</h1>
       <Form
         onSubmit={onSubmit}
-        validationSchema={validationSchema}
+        // validate={validate}
         render={({
           handleSubmit,
           form,
@@ -148,7 +153,11 @@ const App = () => {
         }) => (
           <form onSubmit={handleSubmit}>
             <div>
-              <Field name='name'>
+              <Field
+                name='name'
+                // component={TextField}
+                validate={validateField}
+              >
                 {({ input, meta }) => (
                   <div>
                     <label>Dish name</label>
@@ -158,7 +167,7 @@ const App = () => {
                 )}
               </Field>
 
-              <Field name='preparation_time'>
+              <Field name='preparation_time' validate={validateField}>
                 {({ input, meta }) => (
                   <div>
                     <TimeInput {...input} />
@@ -169,21 +178,25 @@ const App = () => {
             </div>
 
             <div className='horizontal_center_div'>
-              <label>Type of dish:</label>
-              <Field
-                name='type'
-                component='select'
-                // validate={required}
-              >
-                <option>Select type of the dish</option>
-                <option value='pizza'>pizza</option>
-                <option value='soup'>soup</option>
-                <option value='sandwich'>sandwich</option>
-                {/* {meta.error && meta.touched && <span>{meta.error}</span>} */}
+              <Field name='type' type='select' validate={validateField}>
+                {({ input, meta }) => (
+                  <div className={meta.active && 'active'}>
+                    <label>Type of dish:</label>
+                    <select {...input}>
+                      {' '}
+                      <option value=''>Select type of the dish</option>{' '}
+                      <option value='pizza'>pizza</option>
+                      <option value='soup'>soup</option>
+                      <option value='sandwich'>sandwich</option>
+                    </select>
+
+                    {meta.error && meta.touched && <span>{meta.error}</span>}
+                  </div>
+                )}
               </Field>
             </div>
 
-            {/* if pizza */}
+            {/*if pizza */}
             <WhenFieldChanges
               field='type'
               becomes={'soup'}
@@ -209,7 +222,7 @@ const App = () => {
               to={''}
             />
             <Condition when='type' is='pizza'>
-              <Field name='no_of_slices'>
+              <Field name='no_of_slices' validate={validateField}>
                 {({ input, meta }) => {
                   return (
                     <div className='horizontal_center_div'>
@@ -221,7 +234,7 @@ const App = () => {
                 }}
               </Field>
 
-              <Field name='diameter'>
+              <Field name='diameter' validate={validateField}>
                 {({ input, meta }) => {
                   return (
                     <div className='horizontal_center_div'>
@@ -251,18 +264,32 @@ const App = () => {
             <Condition when='type' is='soup'>
               <div className='horizontal_center_div'>
                 <label>Spiciness scale:</label>
-                <Field name='spiciness_scale' component='select'>
-                  <option value=''>Select a spiciness level</option>
-                  <option value='1'>1</option>
-                  <option value='2'>2</option>
-                  <option value='3'>3</option>
-                  <option value='4'>4</option>
-                  <option value='5'>5</option>
-                  <option value='6'>6</option>
-                  <option value='7'>7</option>
-                  <option value='8'>8</option>
-                  <option value='9'>9</option>
-                  <option value='10'>10</option>
+                <Field
+                  name='spiciness_scale'
+                  type='select'
+                  validate={validateField}
+                  // validate={validate}
+                >
+                  {({ input, meta }) => (
+                    <div>
+                      {' '}
+                      <select {...input}>
+                        {' '}
+                        <option value=''>Select a spiciness level</option>
+                        <option value='1'>1</option>
+                        <option value='2'>2</option>
+                        <option value='3'>3</option>
+                        <option value='4'>4</option>
+                        <option value='5'>5</option>
+                        <option value='6'>6</option>
+                        <option value='7'>7</option>
+                        <option value='8'>8</option>
+                        <option value='9'>9</option>
+                        <option value='10'>10</option>
+                      </select>{' '}
+                      {meta.error && meta.touched && <span>{meta.error}</span>}
+                    </div>
+                  )}
                 </Field>
               </div>
             </Condition>
@@ -281,7 +308,7 @@ const App = () => {
               to={''}
             />
             <Condition when='type' is='sandwich'>
-              <Field name='slices_of_bread'>
+              <Field name='slices_of_bread' validate={validateField}>
                 {({ input, meta }) => (
                   <div className='horizontal_center_div'>
                     <label>Slices of bread:</label>
