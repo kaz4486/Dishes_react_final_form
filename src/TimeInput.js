@@ -4,9 +4,7 @@ import Grid from '@mui/material/Unstable_Grid2';
 
 import Item from './Components/Item/Item';
 
-const TimeInput = (input) => {
-  const [currentTime, setCurrentTime] = useState('');
-
+const TimeInput = ({ input, currentTime, setCurrentTime }) => {
   const handleTimeChange = (event) => {
     const { value } = event.target;
     setCurrentTime(value);

@@ -1,5 +1,4 @@
-import * as yup from 'yup';
-import React from 'react';
+import React, { useState } from 'react';
 import ReactDOM from 'react-dom';
 
 import Styles from './Styles';
@@ -11,58 +10,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import SendIcon from '@mui/icons-material/Send';
 import { TextField } from '@mui/material';
 import { v4 as uuid } from 'uuid';
-
-const validationSchema = yup.object().shape({
-  name: yup.string().required('This field is required'),
-  preparation_time: yup
-    .string()
-    .required('This field is required')
-    .test('not-equal', 'Preparation time is required', (value) => {
-      return value !== '00:00:00';
-    }),
-  type: yup
-    .string()
-    .required('This field is required')
-    .test('equal', 'Type must be equal pizza or soup or sandwich ', (value) => {
-      return value !== 'pizza' || value !== 'soup' || value !== 'sandwich';
-    }),
-  no_of_slices: yup
-    .number()
-    .min(1, "This field can't be smaller than 1")
-    .max(99, "This field can't be bigger than 1")
-    .when('type', {
-      is: 'pizza',
-      then: yup.number().required('This field is required'),
-      otherwise: yup.number(),
-    }),
-  diameter: yup
-    .number()
-    .min(1, "This field can't be smaller than 1")
-    .max(99, "This field can't be bigger than 99")
-    .when('type', {
-      is: 'pizza',
-      then: yup.number().required('This field is required'),
-      otherwise: yup.number(),
-    }),
-  spiciness_scale: yup
-    .number()
-    .min(1, "This field can't be smaller than 1")
-    .max(99, "This field can't be bigger than 1")
-    .when('type', {
-      is: 'soup',
-      then: yup.number().required('This field is required'),
-      otherwise: yup.number(),
-    }),
-  slices_of_bread: yup
-    .number()
-    .min(1, "This field can't be smaller than 1")
-    .max(99, "This field can't be bigger than 1")
-    .when('type', {
-      is: 'sandwich',
-      then: yup.number().required('This field is required'),
-      otherwise: yup.number(),
-    }),
-});
+import { validationSchema } from './validationSchema';
 
 const Condition = ({ when, is, children }) => (
   <Field name={when} subscription={{ value: true }}>
@@ -87,18 +35,20 @@ const WhenFieldChanges = ({ field, becomes, set, to }) => (
   </Field>
 );
 
+const handleResetForm = (form, setCurrentTime) => {
+  console.log(setCurrentTime);
+  form.reset();
+  setCurrentTime('');
+};
+
 const onSubmit = async (values) => {
-  console.log('ha');
-  console.log(values);
   const id = uuid();
   const small_id = id.slice(0, 8);
-  console.log(id);
   const dish = {
     small_id,
     ...values,
   };
   const jsonData = JSON.stringify(dish);
-  console.log(jsonData);
 
   try {
     // Wykonanie żądania asynchronicznego do serwera
@@ -137,12 +87,13 @@ const validateField = (value) => {
 };
 
 const App = () => {
+  const [currentTime, setCurrentTime] = useState('');
+
   return (
     <Styles>
       <h1>Insert your dish!</h1>
       <Form
         onSubmit={onSubmit}
-        // validate={validate}
         render={({
           handleSubmit,
           form,
@@ -155,7 +106,8 @@ const App = () => {
             <div>
               <Field
                 name='name'
-                // component={TextField}
+                component={TextField}
+                type='text'
                 validate={validateField}
               >
                 {({ input, meta }) => (
@@ -170,7 +122,11 @@ const App = () => {
               <Field name='preparation_time' validate={validateField}>
                 {({ input, meta }) => (
                   <div>
-                    <TimeInput {...input} />
+                    <TimeInput
+                      input={input}
+                      currentTime={currentTime}
+                      setCurrentTime={setCurrentTime}
+                    />
                     {meta.error && meta.touched && <span>{meta.error}</span>}
                   </div>
                 )}
@@ -330,7 +286,7 @@ const App = () => {
               </Button>
               <Button
                 type='button'
-                onClick={form.reset}
+                onClick={() => handleResetForm(form, setCurrentTime)}
                 disabled={submitting || pristine}
                 variant='outlined'
                 startIcon={<DeleteIcon />}
